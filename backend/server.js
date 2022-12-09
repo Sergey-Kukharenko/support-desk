@@ -1,4 +1,4 @@
-const path = require('path');
+import path from 'path'
 const express = require('express');
 require('colors');
 require('dotenv').config();
@@ -18,17 +18,16 @@ app.use(express.urlencoded({extended: false}));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
 
-// Serve Frontend
-if (process.env.NODE_ENV === 'production') {
-  // Set build folder as static
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
+const __dirname = path.resolve()
 
-  // FIX: below code fixes app crashing on refresh in deployment
-  app.get('*', (req, res) => res.sendFile(__dirname,  '../', 'frontend', 'build', 'index.html'));
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '/frontend/build')))
+
+  app.get('*', (req, res) => res.sendFile(path.resolve(__dirname, 'frontend', 'build', 'index.html')))
 } else {
-  app.get('/', (_, res) => {
-    res.status(200).json({message: 'Welcome to the Support Desk API'});
-  });
+  app.get('/', (req, res) => {
+    res.send('API is running....')
+  })
 }
 
 app.use(errorHandler);
