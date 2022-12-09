@@ -1,35 +1,47 @@
-const path = require('path');
-const express = require('express');
-require('colors');
-require('dotenv').config();
-const {errorHandler} = require('./middleware/errorMiddleware');
-const connectDB = require('./config/db');
-const PORT = process.env.PORT || 5000;
+import path from 'path'
+import express from 'express'
+import dotenv from 'dotenv'
+import colors from 'colors'
+import morgan from 'morgan'
+import { errorHandler } from './middleware/errorMiddleware.js'
+import connectDB from './config/db.js'
 
-// Connect to database
-connectDB();
 
-const app = express();
+dotenv.config()
 
-app.use(express.json());
+connectDB()
+
+const app = express()
+
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'))
+}
+
+app.use(express.json())
 app.use(express.urlencoded({extended: false}));
 
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/tickets', require('./routes/ticketRoutes'));
 
-// Serve Frontend
-if (process.env.NODE_ENV === 'production') {
-  // Set build folder as static
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
+const __dirname = path.resolve()
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')))
 
-  app.get('*', (req, res) => res.sendFile(__dirname, '../', 'frontend', 'build', 'index.html'));
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '/frontend/build')))
+
+  app.get('*', (req, res) => res.sendFile(path.resolve(__dirname, 'frontend', 'build', 'index.html')))
 } else {
-  app.get('/', (_, res) => {
-    res.status(200).json({message: 'Welcome to the Support Desk API'});
-  });
+  app.get('/', (req, res) => {
+    res.send('API is running....')
+  })
 }
 
-app.use(errorHandler);
+app.use(errorHandler)
 
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+const PORT = process.env.PORT || 5000
+
+app.listen(
+  PORT,
+  console.log(`Server running in ${process.env.NODE_ENV} mode on port 5000 ${PORT}`.yellow.bold)
+)
